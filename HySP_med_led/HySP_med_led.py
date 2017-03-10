@@ -1,7 +1,7 @@
 import pyfirmata
 import time
 import epix_framegrabber
-from matplotlib import pylab
+from matplotlib import pylab,pyplot
 import numpy
 #from HySP_med_led import epix_framegrabber
 
@@ -16,37 +16,86 @@ except epix_framegrabber.CameraOpenError:
 
 #open the camera
 camera = epix_framegrabber.Camera()
+
 aa = camera.open(8, [2048, 1088],camera = "PhotonFocus",exposure = 10,frametime = 100.0)
 
+#camera.set_tap_configuration(2)
+
+# put the correct settings for camera, correct CLTap, bitdepth
+
+#create an array like this GOOD_PIX = numpy.zeros((x_size_image,y_size_image,LED))
+fig1 = pylab.figure()
+
+#for each LED
+
+#1. take a picture
+
+#2. if image int < somenumber 
+#if too bright -> while too bright decrease exposure
+#if too dim -> while 
+
+#3. once you find the right image , save it in GOOD_PIX
+
+#4. move to next LED
+
+
+
+camera.set_exposure(1000000)
+#print(camera.cam.properties['ExposureTimeAbs'])
+
+
+bb = camera.start_sequence_capture(1)
+cc = camera.get_image() # this is your picture
+max = numpy.max(cc)
+bb = numpy.array(aa)
+
+
+#plt.imshow(cc)
+
+f = pyplot.figure()
+ax = f.gca()
+f.show()
+
+
+ax.imshow(cc)
+f.canvas.draw()
 for i in range(0,3):
     
     camera.set_exposure(10000*(10*i))    
     #aa = camera.start_sequence_capture(1)
 
     bb= camera.start_sequence_capture(1)
-    cc = camera.get_image()
-
-    #bb = numpy.array(aa)
+    cc = camera.get_image() # this is your picture
+    max = numpy.max(cc)
+    ax.imshow(cc)
+    f.canvas.draw()
+###    #bb = numpy.array(aa)
 
 
 
 
     #camera.close()
-    pylab.imshow(cc)
-    pylab.show()
+    #perfect image
+    #->
+    #GOOD_PIX[:,:,LEDnum] = perfect image
+    ##fig1.imshow(cc)
+    ##pylab.show()
 
 
 camera.close()
+
+
+
 #try:
 #    board = pyfirmata.ArduinoDue('\\.\COM6')
 #except Exception:
 #    print('error')
 
-#for i in range(23,30):
+#for i in range(22,25):  
     
-#    #remember to put PIN down!! only one LED open at the time
+##    #remember to put PIN down!! only one LED open at the time
 #    board.digital[i].write(1)
-#    time.sleep(.5)
+#    time.sleep(1)
 #    board.digital[i].write(0)
 
 

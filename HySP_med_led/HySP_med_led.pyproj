@@ -97,6 +97,9 @@
     <Content Include="formatFiles\PhotonFocus_8bit_256x256.fmt" />
     <Content Include="formatFiles\PhotonFocus_8bit_512x512.fmt" />
     <Content Include="formatFiles\PhotonFocus_8bit_64x64.fmt" />
+    <Content Include="OurCamera.fmt" />
+    <Content Include="PhotonFocus_8bit_1024x1024.fmt" />
+    <Content Include="programming_commands_basler.txt" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
