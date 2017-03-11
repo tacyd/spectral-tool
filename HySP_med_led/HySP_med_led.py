@@ -3,6 +3,8 @@ import time
 import epix_framegrabber
 from matplotlib import pylab,pyplot
 import numpy
+
+
 #from HySP_med_led import epix_framegrabber
 
 try:
@@ -40,35 +42,121 @@ fig1 = pylab.figure()
 
 
 
-camera.set_exposure(1000000)
-#print(camera.cam.properties['ExposureTimeAbs'])
+
+# settings
+camera.set_tap_geometry(4)
+camera.set_pixel_clock(82)
+#camera.set_pixel_size(10)
+camera.set_sensor_bit_depth(10)
+camera.set_gain(511)
+
+exposureTime = 5000        # 20ms, start exposure time for LED #21 (pin 43)              guessing, need to change later
 
 
-bb = camera.start_sequence_capture(1)
-cc = camera.get_image() # this is your picture
-max = numpy.max(cc)
-bb = numpy.array(aa)
+ledPins = [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
+ledOrder = [21, 0, 20, 19, 18, 10, 6, 16, 14, 12, 1, 13, 15, 5, 8, 11, 9, 2, 4, 3, 17]      # order: longest to shortest exposure time
 
 
-#plt.imshow(cc)
-
-f = pyplot.figure()
-ax = f.gca()
-f.show()
 
 
-ax.imshow(cc)
-f.canvas.draw()
-for i in range(0,3):
+try:
+    board = pyfirmata.ArduinoDue('\\.\COM6')
+except Exception:
+    print('error')
+
+
+for i in range(19,20):       # (0, 21) 0 to 20          testing with only 19, LED #3
+    led = ledPins[ledOrder[i]]
+    board.digital[led].write(1)
+
+    numGreaterThan = 1000      # fake/bogus number to satisfy the while loop
+
+#    while ( (numGreaterThan > 39) & (numGreaterThan < 77) ):
+    while ( (numGreaterThan > 76) or (numGreaterThan < 40) ):        # want [40,76]
+        
     
-    camera.set_exposure(10000*(10*i))    
-    #aa = camera.start_sequence_capture(1)
 
-    bb= camera.start_sequence_capture(1)
-    cc = camera.get_image() # this is your picture
-    max = numpy.max(cc)
-    ax.imshow(cc)
-    f.canvas.draw()
+
+        
+    
+        f = pyplot.figure()
+        ax = f.gca()
+        f.show()
+
+
+
+
+        camera.set_exposure(exposureTime)      
+        #print(camera.cam.properties['ExposureTimeAbs'])        
+    
+        bb= camera.start_sequence_capture(1)
+        cc = camera.get_image() # this is your picture
+        max = numpy.max(cc)
+#       bb = numpy.array(aa)
+        dd = numpy.array(cc)
+
+        ax.imshow(cc)
+        f.canvas.draw()   
+    
+       # print(dd)
+        numGreaterThan = ( (dd > 0) ).sum()             # dd > 3964         10-19, >991, 1024       40-76, 	>3964, 4096    
+        # correct: 1024x1024 = 1048576 when (dd<4096)         correct: 0 when (dd>4096)       
+        # image doesn't show true colors?  0 when (dd>3964)         1025487 when (dd>0)
+        print(numGreaterThan)
+
+
+
+        # guessed algorithm for now, need to change later
+        if numGreaterThan == 0:     # needed?
+            exposureTime = 5        # edit later
+        elif ( (numGreaterThan > 76) or (numGreaterThan < 40) ):
+            exposureTime *= 1.004*numpy.exp(-0.002803*numGreaterThan)
+
+
+
+    board.digital[led].write(0)
+
+
+    # code outside while loop
+    # save exposure time to array
+    # save image to array 
+# ADD CODE
+
+
+
+
+
+
+
+
+
+
+
+#bb = camera.start_sequence_capture(1)
+#cc = camera.get_image() # this is your picture
+#max = numpy.max(cc)
+#bb = numpy.array(aa)
+
+
+##plt.imshow(cc)
+
+#f = pyplot.figure()
+#ax = f.gca()
+#f.show()
+
+
+#ax.imshow(cc)
+#f.canvas.draw()
+#for i in range(0,3):
+    
+#    camera.set_exposure(10000*(10*i))    
+#    #aa = camera.start_sequence_capture(1)
+
+##    bb= camera.start_sequence_capture(1)
+##    cc = camera.get_image() # this is your picture
+##    max = numpy.max(cc)
+##    ax.imshow(cc)
+##    f.canvas.draw()
 ###    #bb = numpy.array(aa)
 
 
