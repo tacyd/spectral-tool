@@ -108,14 +108,15 @@ class Camera(object):
         self.cam.properties['GainRaw'] = 350 #max should be 350, check manual
 
 
-        #list of properties of camera (check here for how to change parameters on camera)
-        for key in self.cam.properties.keys():
-            try:
-                value = self.cam.properties[key]
-            except IOError:
-                value = '<NOT READABLE>'
+        ###list of properties of camera (check here for how to change parameters on camera) 
+        ## uncomment this part to see the properties names
+        #for key in self.cam.properties.keys():
+        #    try:
+        #        value = self.cam.properties[key]
+        #    except IOError:
+        #        value = '<NOT READABLE>'
 
-            print('{0} ({1}):\t{2}'.format(key, self.cam.properties.get_description(key), value))
+        #    print('{0} ({1}):\t{2}'.format(key, self.cam.properties.get_description(key), value))
 
 
 
@@ -193,20 +194,46 @@ class Camera(object):
 
         return im
 
+
+
+    def set_tap_geometry(self, tap_geometry_value):
+        if tap_geometry_value == 4:
+#            print('tap 4xY')
+            self.cam.properties['ClTapGeometry'] = 'Geometry1X4_1Y'
+        if tap_geometry_value == 8:
+#            print('tap 4xY')
+            self.cam.properties['ClTapGeometry'] = 'Geometry1X8_1Y' 
+
+    def set_pixel_clock(self, pixel_clock_value):
+        if pixel_clock_value == 82:
+            self.cam.properties['ClPixelClock'] = 'PixelClock82'
+
+#    def set_pixel_size(self, pixel_size_value):
+#        if pixel_size_value == 10:
+#            self.cam.properties['PixelSize'] = 'Bpp10'      # error, unable to change? can't find in manual
+
+    def set_sensor_bit_depth(self, sensor_bit_depth_value):
+        if sensor_bit_depth_value == 10:
+            self.cam.properties['SensorBitDepth'] = 'BitDepth10'
+
+
     def set_gain(self, gain_value):
         # Set GainRaw
-        if gain_value>350:
-            gain_value = 350
+        if gain_value>511:
+            gain_value = 511
         if gain_value< 0:
             gain_value = 1
 
-        self.cam.properties['GainRaw'] = gain_value #max should be 350, check manual
+        self.cam.properties['GainRaw'] = gain_value #max should be 511, check manual
 
-    def set_exposure(self,exposure_value):
+    def set_exposure(self, exposure_value):
         #exposure in microseconds
         if exposure_value<10862:
             exposure_value = 10862 #min value
         self.cam.properties['ExposureTimeAbs'] = exposure_value
+
+
+
 
 
     def get_image_new(self, buffer_number=None):
@@ -288,5 +315,8 @@ class Camera(object):
 
     def get_snapshot(self):
         self.epix.pxd_goSnap(0x1,1)
+
+
+
 
 
