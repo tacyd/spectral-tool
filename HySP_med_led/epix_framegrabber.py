@@ -210,11 +210,27 @@ class Camera(object):
 
 #    def set_pixel_size(self, pixel_size_value):
 #        if pixel_size_value == 10:
-#            self.cam.properties['PixelSize'] = 'Bpp10'      # error, unable to change? can't find in manual
+#            self.cam.properties['PixelSize'] = 'Bpp10'      # error, unable to change? can't find in manual. 
+# In the programming_commands_basler it says it's a read only, so u cannot change it! 
+#PixelSize (This is a read only feature. This enumeration provides a list of values that indicate the depth of the pixel values in the acquired images in bits per pixel. This value will always be coherent with the pixel format setting.):	Bpp12
+# 
+# in the comments you said you need PixelSize 10? you mean pixel depth 10? or pixel format?
+
+    def set_pixel_format(self, pixel_format):
+        #sets the pixel format
+        # This enumeration sets the format of the pixel data transmitted for acquired images.
+        if pixel_format == 8:
+            self.cam.properties['PixelFormat'] = 'Mono8'
+        if pixel_format == 10:
+            self.cam.properties['PixelFormat'] = 'Mono10'
+        if pixel_format == 12:
+            self.cam.properties['PixelFormat'] = 'Mono12'
 
     def set_sensor_bit_depth(self, sensor_bit_depth_value):
         if sensor_bit_depth_value == 10:
             self.cam.properties['SensorBitDepth'] = 'BitDepth10'
+        if sensor_bit_depth_value == 12:
+            self.cam.properties['SensorBitDepth'] = 'BitDepth12'
 
 
     def set_gain(self, gain_value):

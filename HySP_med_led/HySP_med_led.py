@@ -43,12 +43,15 @@ fig1 = pylab.figure()
 
 
 
-# settings
+# setting camera properties
+
 camera.set_tap_geometry(4)
 camera.set_pixel_clock(82)
+camera.set_pixel_format(10)
 #camera.set_pixel_size(10)
 camera.set_sensor_bit_depth(10)
 camera.set_gain(511)
+
 
 exposureTime = 5000        # 20ms, start exposure time for LED #21 (pin 43)              guessing, need to change later
 
@@ -58,26 +61,26 @@ ledOrder = [21, 0, 20, 19, 18, 10, 6, 16, 14, 12, 1, 13, 15, 5, 8, 11, 9, 2, 4, 
 
 
 
-
+#Open Arduino with pyfirmata firmware. Remember to load "Firmata standard" to arduino using Arduino IDE
 try:
     board = pyfirmata.ArduinoDue('\\.\COM6')
 except Exception:
     print('error')
 
+#make sure all pins are down:
+for pin_num in range(0,len(ledPins)):
+    board.digital[pin_num].write(0)
+
 
 for i in range(19,20):       # (0, 21) 0 to 20          testing with only 19, LED #3
     led = ledPins[ledOrder[i]]
-    board.digital[led].write(1)
+    board.digital[led].write(1) #set pin up
 
     numGreaterThan = 1000      # fake/bogus number to satisfy the while loop
 
 #    while ( (numGreaterThan > 39) & (numGreaterThan < 77) ):
     while ( (numGreaterThan > 76) or (numGreaterThan < 40) ):        # want [40,76]
-        
     
-
-
-        
     
         f = pyplot.figure()
         ax = f.gca()
@@ -91,17 +94,18 @@ for i in range(19,20):       # (0, 21) 0 to 20          testing with only 19, LE
     
         bb= camera.start_sequence_capture(1)
         cc = camera.get_image() # this is your picture
-        max = numpy.max(cc)
-#       bb = numpy.array(aa)
-        dd = numpy.array(cc)
+        #max = numpy.max(cc)
+        #bb = numpy.array(aa)
+        image_array = numpy.array(cc)
 
         ax.imshow(cc)
         f.canvas.draw()   
     
-       # print(dd)
-        numGreaterThan = ( (dd > 0) ).sum()             # dd > 3964         10-19, >991, 1024       40-76, 	>3964, 4096    
-        # correct: 1024x1024 = 1048576 when (dd<4096)         correct: 0 when (dd>4096)       
-        # image doesn't show true colors?  0 when (dd>3964)         1025487 when (dd>0)
+        # print(image_array)
+        
+        numGreaterThan = ( (image_array > 0) ).sum()  #this line makes sense in matlab, in python it has a different meaning           # image_array > 3964         10-19, >991, 1024       40-76, 	>3964, 4096    
+        # correct: 1024x1024 = 1048576 when (image_array<4096)         correct: 0 when (image_array>4096)       
+        # image doesn't show true colors?  0 when (image_array>3964)         1025487 when (image_array>0)
         print(numGreaterThan)
 
 
@@ -114,7 +118,7 @@ for i in range(19,20):       # (0, 21) 0 to 20          testing with only 19, LE
 
 
 
-    board.digital[led].write(0)
+    board.digital[led].write(0) #set pin down
 
 
     # code outside while loop
