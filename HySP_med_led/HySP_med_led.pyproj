@@ -27,6 +27,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="formatFiles\" />
+    <Folder Include="Spectra\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="formatFiles\Basler_8bit_1020x1020.fmt" />
@@ -100,6 +101,34 @@
     <Content Include="OurCamera.fmt" />
     <Content Include="PhotonFocus_8bit_1024x1024.fmt" />
     <Content Include="programming_commands_basler.txt" />
+    <Content Include="Spectra\1050nm-10sec.txt" />
+    <Content Include="Spectra\1050nm.txt" />
+    <Content Include="Spectra\365nm-5secexp.txt" />
+    <Content Include="Spectra\365nm.txt" />
+    <Content Include="Spectra\395nm-1sec.txt" />
+    <Content Include="Spectra\420nm-1sec.txt" />
+    <Content Include="Spectra\450n.txt" />
+    <Content Include="Spectra\470nm.txt" />
+    <Content Include="Spectra\500nm.txt" />
+    <Content Include="Spectra\520nm.txt" />
+    <Content Include="Spectra\580nm.txt" />
+    <Content Include="Spectra\635nm.txt" />
+    <Content Include="Spectra\665nm.txt" />
+    <Content Include="Spectra\680nm-1sec.txt" />
+    <Content Include="Spectra\700nm-1sec.txt" />
+    <Content Include="Spectra\730nm-1sec.txt" />
+    <Content Include="Spectra\760nm-1sec.txt" />
+    <Content Include="Spectra\780nm-1sec.txt" />
+    <Content Include="Spectra\780nm-5sec.txt" />
+    <Content Include="Spectra\810nm-1sec.txt" />
+    <Content Include="Spectra\830nm-1sec.txt" />
+    <Content Include="Spectra\830nm-5sec.txt" />
+    <Content Include="Spectra\830nm-panel3-1sec.txt" />
+    <Content Include="Spectra\905nm-5sec.txt" />
+    <Content Include="Spectra\940nm-5sec.txt" />
+    <Content Include="Spectra\970nm-10sec.txt" />
+    <Content Include="Spectra\970nm-good.txt" />
+    <Content Include="Spectra\dark-5sec.txt" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

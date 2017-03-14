@@ -6,127 +6,179 @@ import numpy
 
 
 #from HySP_med_led import epix_framegrabber
+test_mode = 1
 
-try:
-    epix_framegrabber.Camera()
-    epix_available = True
-except epix_framegrabber.CameraOpenError:
-    epix_available = False
+if test_mode == 0:
 
-
-
-
-#open the camera
-camera = epix_framegrabber.Camera()
-
-aa = camera.open(8, [2048, 1088],camera = "PhotonFocus",exposure = 10,frametime = 100.0)
-
-#camera.set_tap_configuration(2)
-
-# put the correct settings for camera, correct CLTap, bitdepth
-
-#create an array like this GOOD_PIX = numpy.zeros((x_size_image,y_size_image,LED))
-fig1 = pylab.figure()
-
-#for each LED
-
-#1. take a picture
-
-#2. if image int < somenumber 
-#if too bright -> while too bright decrease exposure
-#if too dim -> while 
-
-#3. once you find the right image , save it in GOOD_PIX
-
-#4. move to next LED
+    try:
+        epix_framegrabber.Camera()
+        epix_available = True
+    except epix_framegrabber.CameraOpenError:
+        epix_available = False
 
 
 
 
-# setting camera properties
+    #open the camera
+    camera = epix_framegrabber.Camera()
 
-camera.set_tap_geometry(4)
-camera.set_pixel_clock(82)
-camera.set_pixel_format(10)
-#camera.set_pixel_size(10)
-camera.set_sensor_bit_depth(10)
-camera.set_gain(511)
+    aa = camera.open(8, [2048, 1088],camera = "PhotonFocus",exposure = 10,frametime = 100.0)
 
+    #camera.set_tap_configuration(2)
 
-exposureTime = 5000        # 20ms, start exposure time for LED #21 (pin 43)              guessing, need to change later
+    # put the correct settings for camera, correct CLTap, bitdepth
 
+    #create an array like this GOOD_PIX = numpy.zeros((x_size_image,y_size_image,LED))
+    fig1 = pylab.figure()
 
-ledPins = [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
-ledOrder = [21, 0, 20, 19, 18, 10, 6, 16, 14, 12, 1, 13, 15, 5, 8, 11, 9, 2, 4, 3, 17]      # order: longest to shortest exposure time
+    #for each LED
 
+    #1. take a picture
 
+    #2. if image int < somenumber 
+    #if too bright -> while too bright decrease exposure
+    #if too dim -> while 
 
-#Open Arduino with pyfirmata firmware. Remember to load "Firmata standard" to arduino using Arduino IDE
-try:
-    board = pyfirmata.ArduinoDue('\\.\COM6')
-except Exception:
-    print('error')
+    #3. once you find the right image , save it in GOOD_PIX
 
-#make sure all pins are down:
-for pin_num in range(0,len(ledPins)):
-    board.digital[pin_num].write(0)
+    #4. move to next LED
 
 
-for i in range(19,20):       # (0, 21) 0 to 20          testing with only 19, LED #3
-    led = ledPins[ledOrder[i]]
-    board.digital[led].write(1) #set pin up
 
-    numGreaterThan = 1000      # fake/bogus number to satisfy the while loop
 
-#    while ( (numGreaterThan > 39) & (numGreaterThan < 77) ):
-    while ( (numGreaterThan > 76) or (numGreaterThan < 40) ):        # want [40,76]
+    # setting camera properties
+
+    camera.set_tap_geometry(4)
+    camera.set_pixel_clock(82)
+    camera.set_pixel_format(10)
+    #camera.set_pixel_size(10)
+    camera.set_sensor_bit_depth(10)
+    camera.set_gain(511)
+
+
+    exposureTime = 5000        # 20ms, start exposure time for LED #21 (pin 43)              guessing, need to change later
+
+
+    ledPins = [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
+    ledOrder = [21, 0, 20, 19, 18, 10, 6, 16, 14, 12, 1, 13, 15, 5, 8, 11, 9, 2, 4, 3, 17]      # order: longest to shortest exposure time
+
+
+
+    #Open Arduino with pyfirmata firmware. Remember to load "Firmata standard" to arduino using Arduino IDE
+    try:
+        board = pyfirmata.ArduinoDue('\\.\COM6')
+    except Exception:
+        print('error')
+
+    #make sure all pins are down:
+    for pin_num in range(0,len(ledPins)):
+        board.digital[pin_num].write(0)
+
+
+    for i in range(19,20):       # (0, 21) 0 to 20          testing with only 19, LED #3
+        led = ledPins[ledOrder[i]]
+        board.digital[led].write(1) #set pin up
+
+        numGreaterThan = 1000      # fake/bogus number to satisfy the while loop
+
+    #    while ( (numGreaterThan > 39) & (numGreaterThan < 77) ):
+        while ( (numGreaterThan > 76) or (numGreaterThan < 40) ):        # want [40,76]
     
     
-        f = pyplot.figure()
-        ax = f.gca()
-        f.show()
+            f = pyplot.figure()
+            ax = f.gca()
+            f.show()
 
 
 
 
-        camera.set_exposure(exposureTime)      
-        #print(camera.cam.properties['ExposureTimeAbs'])        
+            camera.set_exposure(exposureTime)      
+            #print(camera.cam.properties['ExposureTimeAbs'])        
     
-        bb= camera.start_sequence_capture(1)
-        cc = camera.get_image() # this is your picture
-        #max = numpy.max(cc)
-        #bb = numpy.array(aa)
-        image_array = numpy.array(cc)
+            bb= camera.start_sequence_capture(1)
+            cc = camera.get_image() # this is your picture
+            #max = numpy.max(cc)
+            #bb = numpy.array(aa)
+            image_array = numpy.array(cc)
 
-        ax.imshow(cc)
-        f.canvas.draw()   
+            ax.imshow(cc)
+            f.canvas.draw()   
     
-        # print(image_array)
+            # print(image_array)
         
-        numGreaterThan = ( (image_array > 0) ).sum()  #this line makes sense in matlab, in python it has a different meaning           # image_array > 3964         10-19, >991, 1024       40-76, 	>3964, 4096    
-        # correct: 1024x1024 = 1048576 when (image_array<4096)         correct: 0 when (image_array>4096)       
-        # image doesn't show true colors?  0 when (image_array>3964)         1025487 when (image_array>0)
-        print(numGreaterThan)
+            numGreaterThan = ( (image_array > 0) ).sum()  #this line makes sense in matlab, in python it has a different meaning           # image_array > 3964         10-19, >991, 1024       40-76, 	>3964, 4096    
+            # correct: 1024x1024 = 1048576 when (image_array<4096)         correct: 0 when (image_array>4096)       
+            # image doesn't show true colors?  0 when (image_array>3964)         1025487 when (image_array>0)
+            print(numGreaterThan)
 
 
 
-        # guessed algorithm for now, need to change later
-        if numGreaterThan == 0:     # needed?
-            exposureTime = 5        # edit later
-        elif ( (numGreaterThan > 76) or (numGreaterThan < 40) ):
-            exposureTime *= 1.004*numpy.exp(-0.002803*numGreaterThan)
+            # guessed algorithm for now, need to change later
+            if numGreaterThan == 0:     # needed?
+                exposureTime = 5        # edit later
+            elif ( (numGreaterThan > 76) or (numGreaterThan < 40) ):
+                exposureTime *= 1.004*numpy.exp(-0.002803*numGreaterThan)
 
 
 
-    board.digital[led].write(0) #set pin down
+        board.digital[led].write(0) #set pin down
 
-
+    camera.close()
     # code outside while loop
     # save exposure time to array
     # save image to array 
 # ADD CODE
 
+else:
+    # grab the spectra for each LED
+    led_spectra = numpy.zeros((24,3648)) #measured spectra
+    dark_bkg = numpy.zeros((2,3648)) # position 0 is for 1 sec dark, pos 1 is for 5 sec dark
+    wavelength = numpy.zeros((1,3648)) #corresponding wavelengths
 
+    spectra_list = []
+    spectra_list.append('Spectra\\365nm.txt')
+    spectra_list.append('Spectra\\395nm-1sec.txt')
+    spectra_list.append('Spectra\\420nm-1sec.txt')
+    spectra_list.append('Spectra\\450mm.txt')
+    spectra_list.append('Spectra\\470nm.txt')
+    spectra_list.append('Spectra\\500nm.txt')
+    spectra_list.append('Spectra\\520nm.txt')
+    spectra_list.append('Spectra\\580nm.txt')
+    spectra_list.append('Spectra\\635nm.txt')
+    spectra_list.append('Spectra\\665nm.txt')
+    spectra_list.append('Spectra\\680nm-1sec.txt')
+    spectra_list.append('Spectra\\700nm-1sec.txt')
+    spectra_list.append('Spectra\\730nm-1sec.txt')
+    spectra_list.append('Spectra\\760nm-1sec.txt')
+    spectra_list.append('Spectra\\780nm-1sec.txt')
+    spectra_list.append('Spectra\\810nm-1sec.txt')
+    spectra_list.append('Spectra\\830nm-1sec.txt')
+    spectra_list.append('Spectra\\905nm-5sec.txt')
+    spectra_list.append('Spectra\\940nm-5sec.txt')
+    spectra_list.append('Spectra\\970nm-good.txt')
+    spectra_list.append('Spectra\\1050nm-10sec.txt')
+
+    #load dark spectra
+    
+    temp= numpy.loadtxt('Spectra\\dark.txt')
+    dark_bkg[0,:]  = temp[:,1]
+    temp = numpy.loadtxt('Spectra\\dark-5sec.txt')
+    dark_bkg[1,:] = temp[:,1]
+
+    #load wavelengths
+    wavelength[0,:] = temp[:,0]
+    f2 = pyplot.figure()
+    ax2 = f2.gca()
+    f2.show()
+    for spec_data in range(0,len(spectra_list)):
+        temp = numpy.loadtxt(spectra_list[0])
+
+        led_spectra[spec_data,:] = temp[:,1]- (dark_bkg[0,:])
+        ax2.plot(wavelength[0,:],led_spectra[spec_data,:])
+        f2.canvas.draw()   
+
+
+        
 
 
 
@@ -174,7 +226,7 @@ for i in range(19,20):       # (0, 21) 0 to 20          testing with only 19, LE
     ##pylab.show()
 
 
-camera.close()
+
 
 
 
