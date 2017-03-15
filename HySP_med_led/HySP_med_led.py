@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QMainWindow, QFormLayout, QVB
 from pandas import DataFrame
 
 #from HySP_med_led import epix_framegrabber
-test_mode = 1
+test_mode = 0
 
 if test_mode == 0:
 
@@ -61,8 +61,8 @@ if test_mode == 0:
     exposureTime = 20000    #minimum 11000    # 20ms, start exposure time for LED #21 (pin 43)              guessing, need to change later
 
 
-    #ledPins = [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
-    ledPins = [22, 23, 24, 25, 26, 27, 28, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
+    ledPins = [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
+    #ledPins = [22, 23, 24, 25, 26, 27, 28, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
     ledOrder = [21, 0, 20, 19, 18, 10, 6, 16, 14, 12, 1, 13, 15, 5, 8, 11, 9, 2, 4, 3, 17]      # order: longest to shortest exposure time
 
     
@@ -74,8 +74,8 @@ if test_mode == 0:
         print('error')
     print('Initializing Arduino')
     #make sure all pins are down:
-    for pin_num in range(0,len(ledPins)):
-        board.digital[pin_num].write(0)
+    for pin_num in range(0,21):
+        board.digital[ledPins[pin_num]].write(0)
 
 
     #initialize final image array
@@ -169,7 +169,7 @@ if test_mode == 0:
     output_csv = DataFrame(final_exposure_time_array, index = None, columns = list_vector) #format the .csv file
 
 
-    fileName_save, _ = QFileDialog.getSaveFileName(self, "Save data as..") #get input file name and directory
+    fileName_save, _ = QFileDialog.getSaveFileName("Save data as..") #get input file name and directory
     root_name, filetype = ospath.splitext(fileName_save)
     newfilename = root_name + '-LED_exposure.csv'
     print('-exposure values..')

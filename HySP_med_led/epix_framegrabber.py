@@ -72,7 +72,8 @@ class Camera(object):
         formatfile = os.path.join("formatFiles", filename)
         
         #i = self.epix.pxd_PIXCIopen("","", b"OurCamera.fmt") # standard NTSC
-        i = self.epix.pxd_PIXCIopen("","", b"PhotonFocus_8bit_1024x1024.fmt") # standard NTSC
+        i = self.epix.pxd_PIXCIopen("","", b"Basler_full_frame.fmt") # standard NTSC
+        #i = self.epix.pxd_PIXCIopen("","", b"PhotonFocus_8bit_1024x1024.fmt") # standard NTSC
         #i = self.epix.pxd_PIXCIopen("","", filename.encode(encoding='UTF-8')) # standard NTSC
         #i = self.epix.pxd_PIXCIopen("","", "") # standard NTSC
         test = self.epix.pxd_mesgErrorCode(i)
@@ -313,7 +314,7 @@ class Camera(object):
         self.epix.pxd_goLiveSeq(0x1,1,buffersize,1,1000000,1)
 
     def start_sequence_capture(self, n_frames):
-        print('sequence capture started')
+        #print('sequence capture started')
         self.epix.pxd_goLiveSeq(0x1,1,n_frames,1,n_frames,1)
 
     def stop_live_capture(self, ):
