@@ -39,8 +39,8 @@ struct pxvidformat pxvidformat_561_id31232 =
     4,      2048,   0,      2,                              /* xdatdim        */
     1,      1088,   0,      0,                              /* yviddim        */
     1,      1088,   0,      0,                              /* ydatdim        */
-    0,      2048,    0,      0,                              /* xvidoffset     */
-    0,      1088,    0,      0,                              /* yvidoffset     */
+    0,      2048,   0,      0,                              /* xvidoffset     */
+    0,      1088,   0,      0,                              /* yvidoffset     */
     0,      0,      0,      0,                              /* xvidoffdim     */
     0,      0,      0,      0,                              /* yvidoffdim     */
     1,      1,      0,      0,                              /* datfields      */
@@ -76,7 +76,7 @@ struct pxvidformat pxvidformat_561_id31232 =
     0,                                                      /* as.framespertrigger */
     0,                                                      /* as.scanclass   */
     0,                                                      /* as.phyldsperframe */
-    0,      0,      0,      0,      0,      0,      0,       /* as.rsvd4      */
+    0,      0,      0,      0,      0,      0,      0,      /* as.rsvd4      */
     0,                                                      /* is.hoffset     */
     0,                                                      /* is.voffset     */
     1,                                                      /* is.fieldsperframe */
@@ -84,10 +84,10 @@ struct pxvidformat pxvidformat_561_id31232 =
     1,                                                      /* is.pixiesperclock */
     0,                                                      /* is.linesperframe */
     0,                                                      /* is.pixelsperline */
-    40000,  1000,                                           /* is.pixelclkfreq */
-    1,      1,                                              /* is.vperiod     */
-    1,      888,                                            /* is.hperiod     */
-    1,      1,                                              /* is.framerate   */
+    82000,  1000,                                           /* is.pixelclkfreq */
+    100,      1,                                            /* is.vperiod     */
+    100,    38336768,                                       /* is.hperiod     */
+    35236,  100,                                            /* is.framerate   */
     1,                                                      /* is.fieldperiodicity */
     1,                                                      /* is.lineperiodicity */
     108,                                                    /* is.hscanorder  */
@@ -95,7 +95,7 @@ struct pxvidformat pxvidformat_561_id31232 =
     1,                                                      /* is.framespertrigger */
     2,                                                      /* is.scanclass   */
     1,                                                      /* is.phyldsperframe */
-    0,      0,      0,      0,      0,      0,      0,       /* is.rsvd4      */
+    0,      0,      0,      0,      0,      0,      0,      /* is.rsvd4      */
     1,      1,                                              /* pixelwidth     */
     1,      1,                                              /* pixelheight    */
     0,      0,                                              /* pixeldepth     */
@@ -168,10 +168,10 @@ struct pxvidres pxvidres_125_id31232 =
     0,                                                      /* ddch.rw        */
     0,                                                      /* ddch.fu        */
     0,                                                      /* ddch.rs        */
-    1024,                                                   /* x.datsamples   */
-    1024,                                                   /* x.vidsamples   */
+    2048,                                                   /* x.datsamples   */
+    2048,                                                   /* x.vidsamples   */
     0,                                                      /* x.vidoffset    */
-    1023,                                                   /* x.vidoffsend   */
+    2047,                                                   /* x.vidoffsend   */
     0,      0,      0,      0,      0,      0,      0,      0,       /* x.rsvd */
     3,                                                      /* x.setmaxdatsamples */
     3,                                                      /* x.setmaxvidsamples */
@@ -181,10 +181,10 @@ struct pxvidres pxvidres_125_id31232 =
     0,                                                      /* x.sv.on        */
     0,                                                      /* x.sv.pos       */
     0,                                                      /* x.sv.spc       */
-    1024,                                                   /* y.datsamples   */
-    1024,                                                   /* y.vidsamples   */
+    1088,                                                   /* y.datsamples   */
+    1088,                                                   /* y.vidsamples   */
     0,                                                      /* y.vidoffset    */
-    1023,                                                   /* y.vidoffsend   */
+    1087,                                                   /* y.vidoffsend   */
     0,      0,      0,      0,      0,      0,      0,      0,       /* y.rsvd */
     3,                                                      /* y.setmaxdatsamples */
     3,                                                      /* y.setmaxvidsamples */
@@ -219,22 +219,22 @@ struct pxvidres pxvidres_125_id31232 =
     0,                                                      /* img.pixmem     */
     6340,                                                   /* img.pixdope    */
     0,                                                      /* img.setpixbits */
-    1024,                                                   /* line.pd        */
-    1024,                                                   /* line.pdod      */
-    1024,                                                   /* line.pdodal    */
-    1024,                                                   /* line.pdodalsf  */
+    2560,                                                   /* line.pd        */
+    2560,                                                   /* line.pdod      */
+    2560,                                                   /* line.pdodal    */
+    2560,                                                   /* line.pdodalsf  */
     0,                                                      /* line.rsvd2     */
-    1048576,                                                /* field.pd       */
-    1048584,                                                /* field.pdod     */
-    1048640,                                                /* field.pdodal   */
-    1048640,                                                /* field.pdodalsf */
+    2785280,                                                /* field.pd       */
+    2785288,                                                /* field.pdod     */
+    2785344,                                                /* field.pdodal   */
+    2785344,                                                /* field.pdodalsf */
     0,                                                      /* field.rsvd2    */
-    1048576,                                                /* frame.pd       */
-    1048584,                                                /* frame.pdod     */
-    1048640,                                                /* frame.pdodal   */
-    1048640,                                                /* frame.pdodalsf */
+    2785280,                                                /* frame.pd       */
+    2785288,                                                /* frame.pdod     */
+    2785344,                                                /* frame.pdodal   */
+    2785344,                                                /* frame.pdodalsf */
     0,                                                      /* frame.rsvd2    */
-    31,                                                     /* framebuffers   */
+    12,                                                     /* framebuffers   */
     0,                                                      /* rsvdbuffers    */
     0,      0,      0,      0,      0,      0,      0,       /* rsvd3         */
 };
@@ -390,7 +390,7 @@ struct pxvidimage pxvidimage_251_id31232 =
     0,                                                      /* go.mode        */
     0,      0,                                              /* go.offsbuffer  */
     0,      0,                                              /* go.gainbuffer  */
-    0,      0,      0,      237150216,      0,      0,       /* go.arg        */
+    0,      0,      0,      0,      0,      0,              /* go.arg        */
     0,      0,                                              /* go.dfctbuffer  */
     0,                                                      /* no.order       */
     0,                                                      /* no.mode        */
@@ -477,7 +477,7 @@ struct pxvidmem pxvidmem_72_id31232 =
  */
 struct pxcamcntl pxcamcntl_264_id31232 =
 {
-    800,                                                    /* ddch.len       */
+    946,                                                    /* ddch.len       */
     264,                                                    /* ddch.mos       */
     0,                                                      /* ddch.id        */
     0,                                                      /* ddch.op        */
@@ -584,8 +584,8 @@ struct xcsv2format xcsv2format_32_id31232 =
  */
 struct xcsv2mode xcsv2mode_21_id31232 =
 {
-    40,                                                     /* ddch.len       */
-    21,                                                     /* ddch.mos       */
+    48,                                                     /* ddch.len       */
+    32,                                                     /* ddch.mos       */
     0,                                                      /* ddch.id        */
     0,                                                      /* ddch.op        */
     0,                                                      /* ddch.un        */
@@ -611,8 +611,8 @@ struct xcsv2mode xcsv2mode_21_id31232 =
  */
 struct xcdxxformat xcdxxformat_45_id31232 =
 {
-    124,                                                    /* ddch.len       */
-    45,                                                     /* ddch.mos       */
+    40,                                                    /* ddch.len       */
+    21,                                                     /* ddch.mos       */
     0,                                                      /* ddch.id        */
     0,                                                      /* ddch.op        */
     0,                                                      /* ddch.un        */
