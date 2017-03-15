@@ -15,7 +15,7 @@ if __name__ == '__main__':
     
     parent_QWidget = QWidget()
 #from HySP_med_led import epix_framegrabber
-test_mode = 0
+test_mode =1
 
 if test_mode == 0:
 
@@ -91,6 +91,16 @@ if test_mode == 0:
     final_exposure_time_array = numpy.zeros((21,1))
     show_images = 1
     print('Running Acquisition')
+    if show_images:
+        #will use blit to make plotting faster
+        fig, ax = pyplot.subplots(1, 1)
+        #f = pyplot.figure()
+        ax.set_aspect('equal')
+        ax.hold(True)
+        pyplot.show(False)
+        pyplot.draw()
+        #background = fig.canvas.copy_from_bbox(ax.bbox)
+        first_image = 0
     for i in range(0,21):       # (0, 21) 0 to 20          testing with only 19, LED #3
         led = ledPins[ledOrder[i]]
         board.digital[led].write(1) #set pin up
@@ -100,9 +110,7 @@ if test_mode == 0:
         threshold_value = .97* 2**pixel_bits
     #    while ( (numGreaterThan > 39) & (numGreaterThan < 77) ):
         #while ( (numGreaterThan > 76) or (numGreaterThan < 40) ):        # want [40,76]
-        if show_images:
-            f = pyplot.figure()
-            ax = f.gca()
+        
             #f.show()
         while ( numGreaterThan > 20):
 
@@ -115,8 +123,16 @@ if test_mode == 0:
             #bb = numpy.array(aa)
             image_array = numpy.array(cc)
             if show_images:
-                ax.imshow(image_array)
-                f.canvas.draw()   
+                if first_image == 0:
+                    image_handle = ax.imshow(image_array)
+                    image_handle.autoscale()
+                    fig.canvas.draw()   
+                else:
+                    background_image = fig.canvas.copy_from_bbox(ax.bbox)
+                    fig.canvas.restore_region(background_image)
+                    image_handle.set_array(image_array)
+                    fig.draw_artist(ax)
+                    fig.canvas.blit(ax.bbox)
     
             # print(image_array)
             
