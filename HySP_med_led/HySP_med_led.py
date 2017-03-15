@@ -7,6 +7,13 @@ import tifffile as TiffFile
 from PyQt5.QtWidgets import QWidget, QApplication, QMainWindow, QFormLayout, QVBoxLayout,QFileDialog
 from pandas import DataFrame
 
+
+#build a QApplication for opening windows
+if __name__ == '__main__':
+    import sys
+    app = QApplication(sys.argv)
+    
+    parent_QWidget = QWidget()
 #from HySP_med_led import epix_framegrabber
 test_mode = 0
 
@@ -169,7 +176,7 @@ if test_mode == 0:
     output_csv = DataFrame(final_exposure_time_array, index = None, columns = list_vector) #format the .csv file
 
 
-    fileName_save, _ = QFileDialog.getSaveFileName("Save data as..") #get input file name and directory
+    fileName_save, _ = QFileDialog.getSaveFileName(parent_QWidget,"Save data as..") #get input file name and directory
     root_name, filetype = ospath.splitext(fileName_save)
     newfilename = root_name + '-LED_exposure.csv'
     print('-exposure values..')
@@ -196,6 +203,13 @@ if test_mode == 0:
 # ADD CODE
 
 else:
+    if __name__ == '__main__':
+        import sys
+        app = QApplication(sys.argv)
+    
+    aa = QWidget()
+    fileName_save, _ = QFileDialog.getSaveFileName(aa,"Save data as..") #get input file name and directory
+    
     # grab the spectra for each LED
     led_spectra = numpy.zeros((24,3648)) #measured spectra
     dark_bkg = numpy.zeros((2,3648)) # position 0 is for 1 sec dark, pos 1 is for 5 sec dark

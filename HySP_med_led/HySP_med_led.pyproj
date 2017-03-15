@@ -30,6 +30,7 @@
     <Folder Include="Spectra\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Basler_8bit_2048x1088.fmt" />
     <Content Include="formatFiles\Basler_8bit_1020x1020.fmt" />
     <Content Include="formatFiles\OurCamera.fmt" />
     <Content Include="formatFiles\PhotonFocus_10bit_1024x1024.fmt" />
