@@ -3,7 +3,9 @@ import time
 import epix_framegrabber
 from matplotlib import pylab,pyplot
 import numpy
-
+import tifffile as TiffFile
+from PyQt5.QtWidgets import QWidget, QApplication, QMainWindow, QFormLayout, QVBoxLayout,QFileDialog
+from pandas import DataFrame
 
 #from HySP_med_led import epix_framegrabber
 test_mode = 1
@@ -47,50 +49,55 @@ if test_mode == 0:
 
 
     # setting camera properties
-
+    pixel_bits = 10
     camera.set_tap_geometry(4)
     camera.set_pixel_clock(82)
-    camera.set_pixel_format(10)
+    camera.set_pixel_format(pixel_bits)
     #camera.set_pixel_size(10)
-    camera.set_sensor_bit_depth(10)
+    camera.set_sensor_bit_depth(pixel_bits)
     camera.set_gain(511)
 
 
-    exposureTime = 5000        # 20ms, start exposure time for LED #21 (pin 43)              guessing, need to change later
+    exposureTime = 20000    #minimum 11000    # 20ms, start exposure time for LED #21 (pin 43)              guessing, need to change later
 
 
-    ledPins = [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
+    #ledPins = [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
+    ledPins = [22, 23, 24, 25, 26, 27, 28, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
     ledOrder = [21, 0, 20, 19, 18, 10, 6, 16, 14, 12, 1, 13, 15, 5, 8, 11, 9, 2, 4, 3, 17]      # order: longest to shortest exposure time
 
-
+    
 
     #Open Arduino with pyfirmata firmware. Remember to load "Firmata standard" to arduino using Arduino IDE
     try:
         board = pyfirmata.ArduinoDue('\\.\COM6')
     except Exception:
         print('error')
-
+    print('Initializing Arduino')
     #make sure all pins are down:
     for pin_num in range(0,len(ledPins)):
         board.digital[pin_num].write(0)
 
 
-    for i in range(19,20):       # (0, 21) 0 to 20          testing with only 19, LED #3
+    #initialize final image array
+    final_hyperspectral_array = numpy.zeros((21,2048,1088))
+    #initialize final exposure array
+    final_exposure_time_array = numpy.zeros((21,1))
+    show_images = 1
+    print('Running Acquisition')
+    for i in range(0,21):       # (0, 21) 0 to 20          testing with only 19, LED #3
         led = ledPins[ledOrder[i]]
         board.digital[led].write(1) #set pin up
 
         numGreaterThan = 1000      # fake/bogus number to satisfy the while loop
 
+        threshold_value = .97* 2**pixel_bits
     #    while ( (numGreaterThan > 39) & (numGreaterThan < 77) ):
-        while ( (numGreaterThan > 76) or (numGreaterThan < 40) ):        # want [40,76]
-    
-    
+        #while ( (numGreaterThan > 76) or (numGreaterThan < 40) ):        # want [40,76]
+        if show_images:
             f = pyplot.figure()
             ax = f.gca()
-            f.show()
-
-
-
+            #f.show()
+        while ( numGreaterThan > 20):
 
             camera.set_exposure(exposureTime)      
             #print(camera.cam.properties['ExposureTimeAbs'])        
@@ -100,32 +107,91 @@ if test_mode == 0:
             #max = numpy.max(cc)
             #bb = numpy.array(aa)
             image_array = numpy.array(cc)
-
-            ax.imshow(cc)
-            f.canvas.draw()   
+            if show_images:
+                ax.imshow(image_array)
+                f.canvas.draw()   
     
             # print(image_array)
-        
-            numGreaterThan = ( (image_array > 0) ).sum()  #this line makes sense in matlab, in python it has a different meaning           # image_array > 3964         10-19, >991, 1024       40-76, 	>3964, 4096    
+            
+            numGreaterThan = ( (image_array > threshold_value) ).sum()       # image_array > 3964         10-19, >991, 1024       40-76, 	>3964, 4096    
             # correct: 1024x1024 = 1048576 when (image_array<4096)         correct: 0 when (image_array>4096)       
             # image doesn't show true colors?  0 when (image_array>3964)         1025487 when (image_array>0)
+            # it's a grayscale image? what true colors should be there?
             print(numGreaterThan)
 
 
 
             # guessed algorithm for now, need to change later
-            if numGreaterThan == 0:     # needed?
-                exposureTime = 5        # edit later
-            elif ( (numGreaterThan > 76) or (numGreaterThan < 40) ):
-                exposureTime *= 1.004*numpy.exp(-0.002803*numGreaterThan)
+            if numGreaterThan == 0:    # this means the image is too dim
 
+                exposureTime = exposureTime * 1.1 # increase exposure 10%
+
+            elif numGreaterThan > 19: # this means image is too bright
+                exposureTime *= 1.004*numpy.exp(-0.002803*numGreaterThan) # decrease exposure
+
+        #at this point image_array contains the image we want
+        final_hyperspectral_array[i,:,:] = image_array
+        final_exposure_time_array[i] = exposureTime
 
 
         board.digital[led].write(0) #set pin down
 
+    print('Acquiring corresponding Dark')
+    # acquire a 10 dark images for each exposure and save the average
+    final_dark_images_array = numpy.zeros_like(final_hyperspectral_array)
+    final_corrected_images = numpy.zeros_like(final_hyperspectral_array)
+    for dark_exposure in range(0,21):
+        camera.set_exposure(final_exposure_time_array[dark_exposure])      
+        #print(camera.cam.properties['ExposureTimeAbs'])    
+        #dark_images_temp = numpy.zeros((10, 2048,1088))   
+        for frame_num in range(0,10):
+            bb= camera.start_sequence_capture(1)
+            cc = camera.get_image() # this is your picture
+            if frame_num == 0:
+                dark_images_temp = numpy.array(cc)
+            else:
+                dark_images_temp = dark_images_temp+ numpy.array(cc)
+        #save average dark
+        final_dark_images_array[dark_exposure,:,:] = dark_images_temp/10
+
+        #correct images for exposure and dark. (Intensity - Dark) / Exposure
+        final_corrected_images[dark_exposure,:,:] = numpy.divide((final_hyperspectral_array[dark_exposure,:,:]-final_dark_images_array[dark_exposure,:,:]),final_exposure_time_array[dark_exposure])
+        
     camera.close()
+
+    print('Saving..')
     # code outside while loop
     # save exposure time to array
+    list_vector = ['LED Number']
+    #for led_num in range(0, final_exposure_time_array.shape[0]):
+    #    list_vector.append('Led-num-' + str(led_num))
+
+    output_csv = DataFrame(final_exposure_time_array, index = None, columns = list_vector) #format the .csv file
+
+
+    fileName_save, _ = QFileDialog.getSaveFileName(self, "Save data as..") #get input file name and directory
+    root_name, filetype = ospath.splitext(fileName_save)
+    newfilename = root_name + '-LED_exposure.csv'
+    print('-exposure values..')
+    output_csv.to_csv(newfilename) # save csv file with exposures
+    print('-raw images..')
+    for lambda_num in range(0,final_hyperspectral_array.shape[0]):
+        newfilename = root_name + '-LED'+(str(lambda_num)).zfill(3) + filetype
+        temp_data = numpy.copy( final_hyperspectral_array[lambda_num,:,:])
+        TiffFile.imsave(newfilename, numpy.uint16( temp_data ), software='HySP')
+
+    print('-dark images..')
+    for lambda_num in range(0,final_dark_images_array.shape[0]):
+        newfilename = root_name + '-Dark'+(str(lambda_num)).zfill(3) + filetype
+        temp_data = numpy.copy( final_dark_images_array[lambda_num,:,:])
+        TiffFile.imsave(newfilename, numpy.uint16( temp_data ), software='HySP')
+
+    print('-corrected images..')
+    for lambda_num in range(0,final_corrected_images.shape[0]):
+        newfilename = root_name + '-Corrected'+(str(lambda_num)).zfill(3) + filetype
+        temp_data = numpy.copy( final_corrected_images[lambda_num,:,:])
+        TiffFile.imsave(newfilename, numpy.uint16( temp_data ), software='HySP')
+
     # save image to array 
 # ADD CODE
 
@@ -139,7 +205,7 @@ else:
     spectra_list.append('Spectra\\365nm.txt')
     spectra_list.append('Spectra\\395nm-1sec.txt')
     spectra_list.append('Spectra\\420nm-1sec.txt')
-    spectra_list.append('Spectra\\450mm.txt')
+    spectra_list.append('Spectra\\450nm.txt')
     spectra_list.append('Spectra\\470nm.txt')
     spectra_list.append('Spectra\\500nm.txt')
     spectra_list.append('Spectra\\520nm.txt')
@@ -169,13 +235,24 @@ else:
     wavelength[0,:] = temp[:,0]
     f2 = pyplot.figure()
     ax2 = f2.gca()
-    f2.show()
+    #
+    window_len = 11
     for spec_data in range(0,len(spectra_list)):
-        temp = numpy.loadtxt(spectra_list[0])
-
-        led_spectra[spec_data,:] = temp[:,1]- (dark_bkg[0,:])
+        temp = numpy.loadtxt(spectra_list[spec_data])
+        #smooth
+        x1 = temp[:,1]
+        x1[x1<0] = 0
+        s=numpy.r_[x1[window_len-1:0:-1],x1,x1[-1:-window_len:-1]]
+        s[s<0] = 0
+        w=numpy.ones(window_len,'d')
+        y=numpy.convolve(w/w.sum(),s,mode='valid')
+        y[y<0] = 0
+        bkg_subtracted = y[:-(window_len-1)]- (y[0]*dark_bkg[1,:]/dark_bkg[1,0])
+        bkg_subtracted[bkg_subtracted<0] = 0
+        led_spectra[spec_data,:] = bkg_subtracted / numpy.max(bkg_subtracted)
         ax2.plot(wavelength[0,:],led_spectra[spec_data,:])
-        f2.canvas.draw()   
+        print('plot', spec_data)
+    f2.show()
 
 
         
