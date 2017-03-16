@@ -53,7 +53,7 @@ class Camera(object):
         self.epix = windll.LoadLibrary("C:\Program Files\EPIX\XCLIB\XCLIBW64.dll")
         #self.pylon = windll.LoadLibrary
 
-    def open(self, bit_depth=8, roi_shape=(2048, 1088), roi_pos = (0,0), camera=None, exposure = 0.1, frametime = 0):
+    def open(self, bit_depth=10, roi_shape=(1088, 2048), roi_pos = (0,0), camera=None, exposure = 0.1, frametime = 0):
 #    def open(self, bit_depth=10, roi_shape=(500, 500), roi_pos = (0,0), camera=None, exposure = 0, frametime = 0):	
 #    def open(self, bit_depth=10, roi_shape=(2048, 1088), roi_pos = (0,0), camera=Basler, exposure = 0, frametime = 0):		
         if self.pixci_opened:
@@ -72,7 +72,7 @@ class Camera(object):
         formatfile = os.path.join("formatFiles", filename)
         
         #i = self.epix.pxd_PIXCIopen("","", b"OurCamera.fmt") # standard NTSC
-        i = self.epix.pxd_PIXCIopen("","", b"Basler_full_frame.fmt") # standard NTSC
+        i = self.epix.pxd_PIXCIopen("","", b"Basler_full_frame4.fmt") # standard NTSC
         #i = self.epix.pxd_PIXCIopen("","", b"PhotonFocus_8bit_1024x1024.fmt") # standard NTSC
         #i = self.epix.pxd_PIXCIopen("","", filename.encode(encoding='UTF-8')) # standard NTSC
         #i = self.epix.pxd_PIXCIopen("","", "") # standard NTSC
@@ -171,6 +171,9 @@ class Camera(object):
 
         imagesize = xdim*ydim
 
+        #check format set on camera
+        pixel_format = self.cam.properties['PixelFormat']
+        SensorBitDepth = self.cam.properties['SensorBitDepth'] 
         if self.bit_depth > 8:
             c_type = c_ushort
             cam_read = self.epix.pxd_readushort
@@ -180,10 +183,9 @@ class Camera(object):
         c_buf = (c_type * imagesize)(0)
         c_buf_size = sizeof(c_buf)
 
-        cam_read(0x1, buffer_number, 0, 0, -1, ydim, c_buf,
-                           c_buf_size, b"Gray")
+        cam_read(0x1, buffer_number, 0, 0, -1, ydim, c_buf,c_buf_size, b"Gray")
 
-        im = np.frombuffer(c_buf, c_type).reshape([xdim, ydim])
+        im = np.frombuffer(c_buf, c_type).reshape([ydim, xdim])
         #imshow
         
         if self.bit_depth > 8:
@@ -191,6 +193,8 @@ class Camera(object):
             # outputs look nicer (max pixel intensity will be interpreted as
             # white by image viewers). i.e. linearly rescale pixel values to
             # a 16 bit scale : 0 to 65535. Note 65535 = (2**16 - 1).
+
+            #it seems ile 
             im = im * 2**(16-self.bit_depth)
 
         return im
@@ -227,6 +231,9 @@ class Camera(object):
         if pixel_format == 12:
             self.cam.properties['PixelFormat'] = 'Mono12'
 
+        val = self.cam.properties['PixelSize']
+        aa=0
+
     def set_sensor_bit_depth(self, sensor_bit_depth_value):
         if sensor_bit_depth_value == 10:
             self.cam.properties['SensorBitDepth'] = 'BitDepth10'
@@ -245,8 +252,10 @@ class Camera(object):
 
     def set_exposure(self, exposure_value):
         #exposure in microseconds
-        if exposure_value<10862:
+        if exposure_value<24:#10862:
             exposure_value = 10862 #min value
+        if exposure_value > 10000000:
+            exposure_value = 10000000 #max value
         self.cam.properties['ExposureTimeAbs'] = exposure_value
 
 

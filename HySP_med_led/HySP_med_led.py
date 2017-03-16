@@ -6,16 +6,18 @@ import numpy
 import tifffile as TiffFile
 from PyQt5.QtWidgets import QWidget, QApplication, QMainWindow, QFormLayout, QVBoxLayout,QFileDialog
 from pandas import DataFrame
-
+import sys
+from os import path as ospath
+from time import sleep
 
 #build a QApplication for opening windows
 if __name__ == '__main__':
-    import sys
+    
     app = QApplication(sys.argv)
     
     parent_QWidget = QWidget()
 #from HySP_med_led import epix_framegrabber
-test_mode =1
+test_mode =0
 
 if test_mode == 0:
 
@@ -31,7 +33,7 @@ if test_mode == 0:
     #open the camera
     camera = epix_framegrabber.Camera()
 
-    aa = camera.open(8, [2048, 1088],camera = "PhotonFocus",exposure = 10,frametime = 100.0)
+    aa = camera.open(10, [2048, 1088],camera = "PhotonFocus",exposure = 10,frametime = 100.0)
 
     #camera.set_tap_configuration(2)
 
@@ -68,8 +70,8 @@ if test_mode == 0:
     exposureTime = 20000    #minimum 11000    # 20ms, start exposure time for LED #21 (pin 43)              guessing, need to change later
 
 
-    ledPins = [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
-    #ledPins = [22, 23, 24, 25, 26, 27, 28, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
+    #ledPins = [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
+    ledPins = [22, 23, 24, 25, 26, 27, 28, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]      # ledTotal = 21, pin 29 dead
     ledOrder = [21, 0, 20, 19, 18, 10, 6, 16, 14, 12, 1, 13, 15, 5, 8, 11, 9, 2, 4, 3, 17]      # order: longest to shortest exposure time
 
     
@@ -86,12 +88,13 @@ if test_mode == 0:
 
 
     #initialize final image array
-    final_hyperspectral_array = numpy.zeros((21,2048,1088))
+    final_hyperspectral_array = numpy.zeros((21,1088,2048))
+    #final_hyperspectral_array = numpy.zeros((21,1024,1024))
     #initialize final exposure array
     final_exposure_time_array = numpy.zeros((21,1))
-    show_images = 1
+    show_images = 2
     print('Running Acquisition')
-    if show_images:
+    if show_images==1 or show_images==2:
         #will use blit to make plotting faster
         fig, ax = pyplot.subplots(1, 1)
         #f = pyplot.figure()
@@ -101,28 +104,31 @@ if test_mode == 0:
         pyplot.draw()
         #background = fig.canvas.copy_from_bbox(ax.bbox)
         first_image = 0
-    for i in range(0,21):       # (0, 21) 0 to 20          testing with only 19, LED #3
-        led = ledPins[ledOrder[i]]
+    for i in range(0,len(ledPins)):       # (0, 21) 0 to 20          testing with only 19, LED #3
+        #led = ledPins[ledOrder[i]]
+        led = ledPins[i]
         board.digital[led].write(1) #set pin up
-
+        print('Led',i,'-Pin-',led)
         numGreaterThan = 1000      # fake/bogus number to satisfy the while loop
 
-        threshold_value = .97* 2**pixel_bits
+        threshold_value = .97* 2**16 #this eventually is converted to 16 bits by epix_framegrabber.camera.get_image()
     #    while ( (numGreaterThan > 39) & (numGreaterThan < 77) ):
         #while ( (numGreaterThan > 76) or (numGreaterThan < 40) ):        # want [40,76]
         
             #f.show()
-        while ( numGreaterThan > 20):
+        while ( numGreaterThan > 20 or numGreaterThan == 0):
 
             camera.set_exposure(exposureTime)      
             #print(camera.cam.properties['ExposureTimeAbs'])        
     
             bb= camera.start_sequence_capture(1)
+            time.sleep(exposureTime/1000000)
             cc = camera.get_image() # this is your picture
+            time.sleep(0.05)
             #max = numpy.max(cc)
             #bb = numpy.array(aa)
             image_array = numpy.array(cc)
-            if show_images:
+            if show_images==1:
                 if first_image == 0:
                     image_handle = ax.imshow(image_array)
                     image_handle.autoscale()
@@ -140,22 +146,57 @@ if test_mode == 0:
             # correct: 1024x1024 = 1048576 when (image_array<4096)         correct: 0 when (image_array>4096)       
             # image doesn't show true colors?  0 when (image_array>3964)         1025487 when (image_array>0)
             # it's a grayscale image? what true colors should be there?
-            print(numGreaterThan)
+            print('Pixels oversaturated', numGreaterThan,'-Max Value-',numpy.max(image_array))
 
 
 
             # guessed algorithm for now, need to change later
             if numGreaterThan == 0:    # this means the image is too dim
 
-                exposureTime = exposureTime * 1.1 # increase exposure 10%
+                #now: the max value will be proportional to the exposure. If 
+                max_val = numpy.max(image_array)
+                max_bits = 65535 # 16 bit
+
+                #then ideal exposure time is proportional to max_bits, current exposure is proportional to max_val
+                # exposureTime / max_bits = current_exposureTime/max_val
+                exposureTime = exposureTime* max_bits/max_val
+                #exposureTime = exposureTime * 1.05# increase exposure 5%
 
             elif numGreaterThan > 19: # this means image is too bright
-                exposureTime *= 1.004*numpy.exp(-0.002803*numGreaterThan) # decrease exposure
+                #problem: if the image is largely saturated then exposure time explodes very close to zero. 
+                #exposureTime *= 1.004*numpy.exp(-0.0002803*numGreaterThan) # decrease exposure 
 
+                if numGreaterThan > 1000:
+                    exposureTime = exposureTime/2
+                elif numGreaterThan < 1000 and numGreaterThan > 500:
+                    exposureTime = exposureTime * .80 #decrease exposure 20%
+                elif numGreaterThan < 500 and numGreaterThan > 100:
+                    exposureTime = exposureTime * .90 #decrease exposure 10%
+                elif numGreaterThan < 100 :
+                    exposureTime = exposureTime * .95 #decrease exposure 20%
+            print('Exposure value', exposureTime)
+
+            if exposureTime > 10000000:
+                print('reached max exposure time for camera')
+                break
         #at this point image_array contains the image we want
-        final_hyperspectral_array[i,:,:] = image_array
-        final_exposure_time_array[i] = exposureTime
-
+        final_hyperspectral_array[i,:,:] = numpy.copy(image_array)
+        final_exposure_time_array[i] = numpy.copy(exposureTime)
+        if show_images==2:
+            if first_image == 0:
+                image_handle = ax.imshow(image_array)
+                image_handle.autoscale()
+                fig.canvas.draw()   
+            else:
+                background_image = fig.canvas.copy_from_bbox(ax.bbox)
+                fig.canvas.restore_region(background_image)
+                image_handle.set_array(image_array)
+                fig.draw_artist(ax)
+                fig.canvas.blit(ax.bbox)
+    
+        #reset exposureTime to some reasonable time
+        exposureTime = 20000 
+        image_array = image_array*0
 
         board.digital[led].write(0) #set pin down
 
@@ -169,17 +210,26 @@ if test_mode == 0:
         #dark_images_temp = numpy.zeros((10, 2048,1088))   
         for frame_num in range(0,10):
             bb= camera.start_sequence_capture(1)
+            time.sleep(0.03+final_exposure_time_array[dark_exposure]/1000000)
             cc = camera.get_image() # this is your picture
+            time.sleep(0.05)
             if frame_num == 0:
                 dark_images_temp = numpy.array(cc)
             else:
                 dark_images_temp = dark_images_temp+ numpy.array(cc)
         #save average dark
         final_dark_images_array[dark_exposure,:,:] = dark_images_temp/10
-
-        #correct images for exposure and dark. (Intensity - Dark) / Exposure
-        final_corrected_images[dark_exposure,:,:] = numpy.divide((final_hyperspectral_array[dark_exposure,:,:]-final_dark_images_array[dark_exposure,:,:]),final_exposure_time_array[dark_exposure])
         
+        #subtract background
+        diff_image = final_hyperspectral_array[dark_exposure,:,:]-final_dark_images_array[dark_exposure,:,:]
+        #fix negative values
+        diff_image[diff_image<0]  = 0
+        #correct images for exposure and dark. (Intensity - Dark) / Exposure
+        corrected_image = numpy.divide(diff_image, final_exposure_time_array[dark_exposure]/1000)
+        corrected_image[corrected_image<0] = 0
+        final_corrected_images[dark_exposure,:,:] =numpy.copy(corrected_image)
+        #final_corrected_images[dark_exposure,:,:] = numpy.divide((final_hyperspectral_array[dark_exposure,:,:]-final_dark_images_array[dark_exposure,:,:]),final_exposure_time_array[dark_exposure]/1000)
+    final_corrected_images = numpy.divide( (2**16-1)*final_corrected_images, numpy.max(final_corrected_images))
     camera.close()
 
     print('Saving..')
@@ -194,6 +244,7 @@ if test_mode == 0:
 
     fileName_save, _ = QFileDialog.getSaveFileName(parent_QWidget,"Save data as..") #get input file name and directory
     root_name, filetype = ospath.splitext(fileName_save)
+    filetype = '.tiff'
     newfilename = root_name + '-LED_exposure.csv'
     print('-exposure values..')
     output_csv.to_csv(newfilename) # save csv file with exposures
@@ -219,12 +270,7 @@ if test_mode == 0:
 # ADD CODE
 
 else:
-    if __name__ == '__main__':
-        import sys
-        app = QApplication(sys.argv)
     
-    aa = QWidget()
-    fileName_save, _ = QFileDialog.getSaveFileName(aa,"Save data as..") #get input file name and directory
     
     # grab the spectra for each LED
     led_spectra = numpy.zeros((24,3648)) #measured spectra
