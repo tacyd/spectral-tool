@@ -169,11 +169,11 @@ if test_mode == 0:
                 if numGreaterThan > 1000:
                     exposureTime = exposureTime/2
                 elif numGreaterThan < 1000 and numGreaterThan > 500:
-                    exposureTime = exposureTime * .80 #decrease exposure 20%
+                    exposureTime = exposureTime * .75 #decrease exposure 25%
                 elif numGreaterThan < 500 and numGreaterThan > 100:
                     exposureTime = exposureTime * .90 #decrease exposure 10%
                 elif numGreaterThan < 100 :
-                    exposureTime = exposureTime * .95 #decrease exposure 20%
+                    exposureTime = exposureTime * .95 #decrease exposure 5%
             print('Exposure value', exposureTime)
 
             if exposureTime > 10000000:
@@ -200,11 +200,47 @@ if test_mode == 0:
 
         board.digital[led].write(0) #set pin down
 
-    print('Acquiring corresponding Dark')
+    print('Acquiring average image..')
+    #this loop uses the optimal exposure values found during calibration to acquire N images and average them
+
+    N= 10
+    final_averaged_images_array = numpy.zeros_like(final_hyperspectral_array)
+    for i in range(0,len(ledPins)):       # (0, 21) 0 to 20          testing with only 19, LED #3
+        #led = ledPins[ledOrder[i]]
+        led = ledPins[i]
+        board.digital[led].write(1) #set pin up
+        print('Led',i,'-Pin-',led)
+        
+
+        threshold_value = .97* 2**16 #this eventually is converted to 16 bits by epix_framegrabber.camera.get_image()
+        for frame in range(0,N):
+
+            camera.set_exposure(final_exposure_time_array[i])      
+            #print(camera.cam.properties['ExposureTimeAbs'])        
+    
+            bb= camera.start_sequence_capture(1)
+            time.sleep(exposureTime/1000000)
+            cc = camera.get_image() # this is your picture
+            time.sleep(0.05)
+            #max = numpy.max(cc)
+            #bb = numpy.array(aa)
+            image_array =image_array+ numpy.array(cc)
+
+        final_averaged_images_array[i,:,:] = numpy.copy(numpy.divide(image_array,N))
+
+        image_array = image_array*0
+
+        board.digital[led].write(0) #set pin down
+
+    print('Done')
+
+    print('Acquiring corresponding Dark..')
     # acquire a 10 dark images for each exposure and save the average
     final_dark_images_array = numpy.zeros_like(final_hyperspectral_array)
     final_corrected_images = numpy.zeros_like(final_hyperspectral_array)
+    final_corrected_averaged_images_array = numpy.zeros_like(final_hyperspectral_array)
     for dark_exposure in range(0,21):
+        print('Exposure num -',dark_exposure)
         camera.set_exposure(final_exposure_time_array[dark_exposure])      
         #print(camera.cam.properties['ExposureTimeAbs'])    
         #dark_images_temp = numpy.zeros((10, 2048,1088))   
@@ -228,7 +264,16 @@ if test_mode == 0:
         corrected_image = numpy.divide(diff_image, final_exposure_time_array[dark_exposure]/1000)
         corrected_image[corrected_image<0] = 0
         final_corrected_images[dark_exposure,:,:] =numpy.copy(corrected_image)
+
+         #subtract background
+        diff_image_avg = final_averaged_images_array[dark_exposure,:,:]-final_dark_images_array[dark_exposure,:,:]
+        #fix negative values
+        diff_image_avg[diff_image_avg<0]  = 0
+        corrected_avg_image = numpy.divide(diff_image_avg, final_exposure_time_array[dark_exposure]/10000)
+        corrected_avg_image[corrected_avg_image<0] = 0
+        final_corrected_averaged_images_array[dark_exposure,:,:] =numpy.copy(corrected_avg_image)
         #final_corrected_images[dark_exposure,:,:] = numpy.divide((final_hyperspectral_array[dark_exposure,:,:]-final_dark_images_array[dark_exposure,:,:]),final_exposure_time_array[dark_exposure]/1000)
+    print('Done')
     final_corrected_images = numpy.divide( (2**16-1)*final_corrected_images, numpy.max(final_corrected_images))
     camera.close()
 
@@ -246,26 +291,41 @@ if test_mode == 0:
     root_name, filetype = ospath.splitext(fileName_save)
     filetype = '.tiff'
     newfilename = root_name + '-LED_exposure.csv'
-    print('-exposure values..')
+    print('- exposure values..')
     output_csv.to_csv(newfilename) # save csv file with exposures
-    print('-raw images..')
+    print('- raw images..')
     for lambda_num in range(0,final_hyperspectral_array.shape[0]):
         newfilename = root_name + '-LED'+(str(lambda_num)).zfill(3) + filetype
         temp_data = numpy.copy( final_hyperspectral_array[lambda_num,:,:])
         TiffFile.imsave(newfilename, numpy.uint16( temp_data ), software='HySP')
+    print('Done')
 
-    print('-dark images..')
+    print('- dark images..')
     for lambda_num in range(0,final_dark_images_array.shape[0]):
         newfilename = root_name + '-Dark'+(str(lambda_num)).zfill(3) + filetype
         temp_data = numpy.copy( final_dark_images_array[lambda_num,:,:])
         TiffFile.imsave(newfilename, numpy.uint16( temp_data ), software='HySP')
-
-    print('-corrected images..')
+    print('Done')
+    print('- corrected images..')
     for lambda_num in range(0,final_corrected_images.shape[0]):
         newfilename = root_name + '-Corrected'+(str(lambda_num)).zfill(3) + filetype
         temp_data = numpy.copy( final_corrected_images[lambda_num,:,:])
         TiffFile.imsave(newfilename, numpy.uint16( temp_data ), software='HySP')
+    print('Done')
+    print('- averaged images..')
+    for lambda_num in range(0,final_corrected_images.shape[0]):
+        newfilename = root_name + '-Avg'+(str(lambda_num)).zfill(3) + filetype
+        temp_data = numpy.copy( final_averaged_images_array[lambda_num,:,:])
+        TiffFile.imsave(newfilename, numpy.uint16( temp_data ), software='HySP')
+    print('Done')
+    print('- corrected images..')
+    for lambda_num in range(0,final_corrected_images.shape[0]):
+        newfilename = root_name + '-Avg-Corrected'+(str(lambda_num)).zfill(3) + filetype
+        temp_data = numpy.copy( final_corrected_averaged_images_array[lambda_num,:,:])
+        TiffFile.imsave(newfilename, numpy.uint16( temp_data ), software='HySP')
+    print('Done')
 
+    print('Process Completed Successfully!')
     # save image to array 
 # ADD CODE
 
