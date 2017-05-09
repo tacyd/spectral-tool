@@ -19,7 +19,6 @@
 # along with HoloPy.  If not, see <http://www.gnu.org/licenses/>.
 """
 Higher Level interface to the epix framegrabber
-
 .. moduleauthor:: Thomas G. Dimiduk <tom@dimiduk.net>
 .. moduleauthor:: Rebecca W. Perry <perry.becca@gmail.com>
 """
@@ -341,7 +340,6 @@ class Camera(object):
 
     def get_snapshot(self):
         self.epix.pxd_goSnap(0x1,1)
-
 
 
 
